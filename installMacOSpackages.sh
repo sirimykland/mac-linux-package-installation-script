@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # HomeBrew
 echo "##################################"
 echo "            Homebrew              "
@@ -27,6 +29,7 @@ apps=(
   # Formulae
   kotlin
   docker
+  tmux
   nvm
   jenv
   mosh
