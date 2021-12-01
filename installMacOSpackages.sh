@@ -30,9 +30,9 @@ apps=(
   microsoft-teams
   microsoft-outlook
   1password
+  vmware-horizon-client
   # Formulae
   kotlin
-  docker
   tmux
   nvm
   jenv
@@ -40,6 +40,7 @@ apps=(
   awscli
   AdoptOpenJDK/openjdk/adoptopenjdk{8,11,14}
 )
+
 
 brew_exist() {
   if brew list -1 | grep $1 &>/dev/null; then 
@@ -61,6 +62,10 @@ brew_install() {
 for app in ${apps[@]}; do
   brew_install $app
 done
+
+#Docker
+brew install --cask docker
+
 
 # Post brew install
 brew cleanup
