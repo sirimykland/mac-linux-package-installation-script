@@ -94,7 +94,9 @@ if brew_exist jenv ; then
   jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-14.jdk/Contents/Home
   jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
   jenv add /Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+  jenv global 11
 fi
+
 
 # oh-my-zsh
 echo "\n##################################"
