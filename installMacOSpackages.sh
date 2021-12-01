@@ -26,6 +26,10 @@ apps=(
   spotify
   visual-studio-code
   intellij-idea
+  intellij-idea-ce
+  microsoft-teams
+  microsoft-outlook
+  1password
   # Formulae
   kotlin
   docker
@@ -33,6 +37,7 @@ apps=(
   nvm
   jenv
   mosh
+  awscli
   AdoptOpenJDK/openjdk/adoptopenjdk{8,11,14}
 )
 
