@@ -1,25 +1,12 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
-# HomeBrew
-echo "##################################"
-echo "            Homebrew              "
-echo "##################################"
-if test ! "$(which brew)"; then
-    echo "Installing homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+set -e
 
-    (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> /Users/Siri.Mykland/.profile
-    eval "$(/opt/homebrew/bin/brew shellenv)"
-
-else
-    # Update homebrew
-    echo "Updating homebrew..." && brew update
-fi
+# Source common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
 # Apps to install Globally
-echo "\n##################################"
-echo "          Brew packages           "
-echo "##################################"
 apps=(
   # Casks - UI-based apps
   iterm2
@@ -29,15 +16,16 @@ apps=(
   spotify
   visual-studio-code
   intellij-idea
-  vmware-horizon-client
+  bambu-studio
   # Formulae
   tmux
   mosh
+  asdf
+  maven
 )
 
-
 brew_exist() {
-  if brew list -1 | grep $1 &>/dev/null; then 
+  if brew list -1 | grep -qx "$1"; then 
     return 0
   else
     return 1
@@ -48,59 +36,68 @@ brew_install() {
     if brew_exist "$1"; then
         echo "${1} is already installed"
     else
-        echo "\nInstalling $1"
-        brew install "$1" && echo "\n"
+        echo "Installing $1"
+        brew install "$1"
     fi
 }
 
+# HomeBrew
+echo "##################################"
+echo "            Homebrew              "
+echo "##################################"
+
+# Homebrew's prefix differs by architecture:
+#   Apple Silicon -> /opt/homebrew, Intel -> /usr/local
+if [ "$(uname -m)" = "arm64" ]; then
+    BREW_PREFIX="/opt/homebrew"
+else
+    BREW_PREFIX="/usr/local"
+fi
+
+if test ! "$(which brew)"; then
+    echo "Installing homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    (echo; echo "eval \"\$($BREW_PREFIX/bin/brew shellenv)\"") >> "$HOME/.profile"
+    eval "$("$BREW_PREFIX/bin/brew" shellenv)"
+
+else
+    # Update homebrew
+    echo "Updating homebrew..." && brew update
+fi
+
+# Apps to install
+echo ""
+echo "##################################"
+echo "          Brew packages           "
+echo "##################################"
+
+# Ask for confirmation on apps that are not already installed
+selected_apps=()
 for app in "${apps[@]}"; do
-  brew_install "$app"
+  if brew_exist "$app"; then
+    echo "$app is already installed, skipping"
+    continue
+  fi
+  if confirm_install "$app"; then
+    selected_apps+=("$app")
+  fi
 done
 
-#Docker
-brew install --cask docker
-
+# Install all selected apps
+echo ""
+echo "##################################"
+echo "        Installing packages       "
+echo "##################################"
+for app in "${selected_apps[@]}"; do
+  brew_install "$app"
+done
 
 # Post brew install
 brew cleanup
 
+# Common setup
+install_ohmyzsh
+setup_asdf
 
-echo "\n##################################"
-echo "              Node                "
-echo "##################################"
-
-brew_install nvm
-
-(echo; echo 'export NVM_DIR="$HOME/.nvm"
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion') >> ~/.profile
-
-source ~/.profile
-
-
-if test "$(which node)" && brew_exist node; then
-    echo "Uninstalling Node..."
-    brew uninstall --ignore-dependencies node 
-    brew uninstall node 
-fi
-
-if brew_exist nvm; then
-  nvm install 18
-  nvm install 22 --default
-  echo "\nYou got these versions of node:"
-  nvm ls --no-alias
-fi
-
-
-
-# oh-my-zsh
-echo "\n##################################"
-echo "            Oh-My-Zsh             "
-echo "##################################"
-zsh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-if -e ~/.zshrc.pre-oh-my-zsh ; then 
-  mv ~/.zshrc.pre-oh-my-zsh  ~/.zshrc 
-fi
-
-
-source ~/.zshrc
+print_completion
